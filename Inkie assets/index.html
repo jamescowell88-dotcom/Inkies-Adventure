@@ -1,0 +1,1086 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Epson Inkie - Zone 1, 2 & 3 Transition</title>
+    <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #1e272e;
+        }
+    </style>
+</head>
+<body>
+    <script>
+        // =========================================================================
+        // ZONE 1, 2 & 3 CONFIGURATION
+        // =========================================================================
+        const LEVEL_CONFIG = {
+            levelWidth: 9800,
+            levelHeight: 1000,
+            player: {
+                startX: 100,
+                startY: 500,
+                scale: 0.3,
+                speed: 350,
+                jumpPower: -650,
+                boxWidth: 80,
+                boxHeight: 210
+            },
+            deskMat: { upperSurfaceY: 544, lowerSurfaceY: 760, platformThickness: 24, visualOffsetY: 36 },
+            deskGaps: [
+                { startX: 4200, endX: 4550, resetY: 700 },
+                { startX: 5050, endX: 6900, resetY: 900 }
+            ],
+            eraserPlatforms: [
+                { x: 5200, surfaceY: 650, scale: 0.1 },
+                { x: 5575, surfaceY: 540, scale: 0.1 },
+                { x: 5950, surfaceY: 635, scale: 0.1 },
+                { x: 6325, surfaceY: 520, scale: 0.1 }
+            ],
+            finalRun: {
+                stapler: { x: 7500, surfaceY: 760, scale: 0.12 },
+                smartphones: [
+                    { x: 7800, surfaceY: 630, scale: 0.1 },
+                    { x: 8200, surfaceY: 520, scale: 0.1 },
+                    { x: 8600, surfaceY: 410, scale: 0.1 }
+                ],
+                collectibles: [
+                    { x: 7800, y: 595 },
+                    { x: 8200, y: 485 },
+                    { x: 8600, y: 375 },
+                    { x: 8760, y: 455 },
+                    { x: 8920, y: 555 },
+                    { x: 9080, y: 655 }
+                ],
+                printer: { x: 9200, surfaceY: 760, scale: 0.2 }
+            },
+            
+            // --- PROPS & PLATFORMS ---
+            pencil: { x: 500, y: 340, scale: 0.35, wRatio: 0.85, hRatio: 0.15, offX: 0.075, offY: 0.42 },
+            coffeeCup: { x: 820, y: 490, scale: 1.0, wRatio: 0.5, hRatio: 0.7, offX: 0.175, offY: 0.2 },
+            laptop: { x: 1250, y: 250, scale: 0.55, wRatio: 0.70, hRatio: 0.05, offX: 0.18, offY: 0.48 },
+            
+            // Oat Bars
+            oatBars: [
+                { x: 2000, y: 320, scale: 0.1, wRatio: 0.85, hRatio: 0.1, offX: 0.075, offY: 0.8 },
+                { x: 2300, y: 120, scale: 0.1, wRatio: 0.85, hRatio: 0.1, offX: 0.075, offY: 0.3 }
+            ],
+            
+            // Van Vehicle
+            van: { x: 2300, y: 50, scale: 0.7, speed: 450, dropOffX: 3600 },
+            ruler: { y: 127, platformThickness: 12 },
+            
+            // Single Notebook Stack Asset Position & Scaled Down Size
+            notebookStack: { x: 3250, y: 440, scale: 0.18 },
+            
+            // Pencil Case Spawner sitting on top of the green notebook step
+            pencilCase: { x: 3360, y: 340, scale: 0.8 },
+            
+            blobs: [
+                // Zone 1
+                { x: 500, y: 260 },   
+                { x: 500, y: 520 },   
+                { x: 820, y: 390 },   
+                { x: 1250, y: 100 },  
+                { x: 1100, y: 520 },  
+                { x: 1400, y: 520 },
+                // Zone 2 - High Route
+                { x: 2160, y: 240 },
+                { x: 2000, y: 175 },
+                { x: 2100, y: 100 },
+                // Zone 2 - Low Route
+                { x: 2050, y: 480 },
+                { x: 2250, y: 480 },
+                // Collectible in the fan's airflow
+                { x: 2450, y: 430 },
+                // Zone 2 - Notebook Staircase Route
+                { x: 3120, y: 430 },
+                { x: 3200, y: 380 },
+                { x: 3450, y: 320 },
+                // Collectibles on the shortened lower desk
+                { x: 4625, y: 700 },
+                { x: 4725, y: 700 },
+                { x: 4825, y: 700 },
+                // Collectibles on the erasers
+                { x: 5200, y: 610 },
+                { x: 5575, y: 500 },
+                { x: 5950, y: 595 },
+                { x: 6325, y: 480 },
+                // Collectibles arcing between the erasers
+                { x: 5387, y: 430 },
+                { x: 5762, y: 405 },
+                { x: 6137, y: 395 },
+                // Additional pickups spread across the existing routes
+                { x: 300, y: 430 },
+                { x: 950, y: 450 },
+                { x: 1550, y: 410 },
+                { x: 1450, y: 300 },
+                { x: 1940, y: 220 },
+                { x: 2420, y: 350 },
+                { x: 2850, y: 400 },
+                { x: 3350, y: 290 },
+                { x: 3550, y: 430 },
+                { x: 4600, y: 650 },
+                { x: 5000, y: 650 },
+                { x: 2700, y: 260 },
+                { x: 3000, y: 330 },
+                { x: 7500, y: 650 },
+                { x: 7000, y: 700 },
+                { x: 7600, y: 650 },
+                { x: 8000, y: 575 },
+                { x: 8400, y: 465 },
+                { x: 8850, y: 620 }
+            ],
+            
+            // Enemy Array
+            enemies: [
+                { x: 1250, y: 544, minX: 900, maxX: 1580, speed: 80, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                { x: 2050, y: 300, minX: 1900, maxX: 2100, speed: 60, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: -1 },
+                { x: 1950, y: 544, minX: 1850, maxX: 2050, speed: 70, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                { x: 2200, y: 544, minX: 2100, maxX: 2300, speed: 70, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: -1 },
+                // Enemies patrolling on the desk to the right of the notebook stack
+                { x: 3600, y: 544, minX: 3450, maxX: 3700, speed: 70, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                { x: 3850, y: 544, minX: 3750, maxX: 3950, speed: 75, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: -1 },
+                // Two patrols on the shortened lower desk
+                { x: 4650, y: 760, minX: 4580, maxX: 4720, speed: 80, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                { x: 4890, y: 760, minX: 4800, maxX: 5000, speed: 85, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: -1 },
+                // Patrol on the final eraser
+                { x: 6325, y: 520, minX: 6280, maxX: 6370, speed: 55, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: 1 },
+                // Three patrols between the long gap and stapler
+                { x: 7000, y: 760, minX: 6950, maxX: 7040, speed: 75, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                { x: 7160, y: 760, minX: 7110, maxX: 7200, speed: 80, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: -1 },
+                { x: 7320, y: 760, minX: 7270, maxX: 7340, speed: 85, scale: 0.22, boxWidth: 160, boxHeight: 390, dir: 1 },
+                // Two patrols on each smartphone platform
+                { x: 7755, y: 630, minX: 7730, maxX: 7775, speed: 50, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: 1 },
+                { x: 7845, y: 630, minX: 7825, maxX: 7870, speed: 55, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: -1 },
+                { x: 8155, y: 520, minX: 8130, maxX: 8175, speed: 50, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: 1 },
+                { x: 8245, y: 520, minX: 8225, maxX: 8270, speed: 55, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: -1 },
+                { x: 8555, y: 410, minX: 8530, maxX: 8575, speed: 50, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: 1 },
+                { x: 8645, y: 410, minX: 8625, maxX: 8670, speed: 55, scale: 0.22, boxWidth: 160, boxHeight: 300, dir: -1 }
+            ],
+            
+            // --- ZONE 2 HAZARDS & CHECKPOINTS ---
+            checkpoint: { x: 1750, y: 430, scale: 0.6, wRatio: 0.7, hRatio: 0.8075, offX: 0.15, offY: 0.1925 },
+            fan: { x: 2650, y: 430, scale: 1, windWidth: 500, windPower: 280 } 
+        };
+
+        // =========================================================================
+        // ENGINE CODE
+        // =========================================================================
+        const config = {
+            type: Phaser.AUTO,
+            width: 800,
+            height: 600,
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 800 },
+                    debug: true 
+                }
+            },
+            scene: { preload: preload, create: create, update: update }
+        };
+
+        const game = new Phaser.Game(config);
+        let inkScore = 0;
+        let isShooting = false;
+        
+        let currentCheckpoint = { x: 100, y: 500 };
+        let hasReachedCheckpoint = false;
+        let hasStartedBefore = false;
+
+        function preload() {
+            this.load.image('background', 'bg_office.jpg');
+            this.load.image('ground', 'prop_desk_surface.png'); 
+            this.load.spritesheet('inkie', 'inkie_idle.png', { frameWidth: 119, frameHeight: 252, spacing: 1 }); 
+            this.load.spritesheet('inkie_walk', 'inkie_walk.png', { frameWidth: 133, frameHeight: 234 }); 
+            this.load.image('inkie_jump', 'inkie_jump.png');
+            this.load.image('inkie_fall', 'inkie_fall.png');
+            this.load.image('inkie_shoot', 'inkie_shoot.png'); 
+            
+            this.load.image('pencil', 'hazard_pencil.png');
+            this.load.image('eraser', 'prop_eraser.png');
+            this.load.image('coffee', 'prop_coffee_cup.png');
+            this.load.image('laptop', 'prop_laptop.png');
+            this.load.image('stapler', 'prop_stapler.png');
+            this.load.image('smartphone', 'prop_smartphone.png');
+            this.load.image('goal_printer', 'goal_printer.png');
+            this.load.image('goal_ink_splodges', 'goal_ink_splodges.png');
+            
+            this.load.image('oat_bar', 'prop_oat_bar.png'); 
+            this.load.image('van_empty', 'vehicle_van_empty.png'); 
+            this.load.image('van_driving', 'vehicle_van_driving.png'); 
+            this.load.image('ruler', 'prop_ruler.png');
+            
+            // Notebook Stack Asset & Pencil Case Spawner
+            this.load.image('notebook_stack', 'prop_notebook_stack.png');
+            this.load.image('pencil_case', 'prop_pencil_case.png');
+            this.load.image('rolling_pencil', 'hazard_rolling_pencil.png');
+            
+            this.load.image('blob', 'item_ink_blob.png');
+            this.load.image('projectile', 'item_projectile.png');
+            this.load.image('splat', 'item_projectile_splat.png');
+
+            this.load.image('checkpoint_off', 'checkpoint_off.png');
+            this.load.image('checkpoint_on', 'checkpoint_on.png');
+            this.load.image('fan_blades', 'hazard_fan_blades.png');
+            this.load.image('wind', 'hazard_wind.png');
+
+            this.load.spritesheet('toner_enemy', 'enemy_toner_walk.png', { 
+                frameWidth: 220, 
+                frameHeight: 390,
+                margin: 10,
+                spacing: 20
+            });
+            this.load.image('toner_dead', 'enemy_toner_dead.png');
+        }
+
+        function getOpaqueBounds(image) {
+            let canvas = document.createElement('canvas');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            let context = canvas.getContext('2d');
+            context.drawImage(image, 0, 0);
+            let pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+            let left = canvas.width;
+            let top = canvas.height;
+            let right = -1;
+            let bottom = -1;
+
+            for (let index = 3; index < pixels.length; index += 4) {
+                if (pixels[index] === 0) continue;
+                let pixel = (index - 3) / 4;
+                let x = pixel % canvas.width;
+                let y = Math.floor(pixel / canvas.width);
+                left = Math.min(left, x);
+                top = Math.min(top, y);
+                right = Math.max(right, x);
+                bottom = Math.max(bottom, y);
+            }
+
+            return { left, top, right, bottom, width: right - left + 1, height: bottom - top + 1 };
+        }
+
+        function getOpaqueTopAtWorldX(image, worldX, imageWorldLeft, scale) {
+            let canvas = document.createElement('canvas');
+            canvas.width = image.width;
+            canvas.height = image.height;
+            let context = canvas.getContext('2d');
+            context.drawImage(image, 0, 0);
+            let pixels = context.getImageData(0, 0, canvas.width, canvas.height).data;
+            let imageX = Phaser.Math.Clamp(Math.round((worldX - imageWorldLeft) / scale), 0, image.width - 1);
+
+            for (let y = 0; y < image.height; y += 1) {
+                if (pixels[(y * image.width + imageX) * 4 + 3] > 0) return y;
+            }
+
+            return image.height;
+        }
+
+        function create() {
+            this.physics.world.resume();
+            this.physics.world.setBounds(0, 0, LEVEL_CONFIG.levelWidth, LEVEL_CONFIG.levelHeight);
+
+            let bg = this.add.image(400, 300, 'background');
+            bg.setDisplaySize(800, 600); 
+            bg.setScrollFactor(0); 
+
+            this.platforms = this.physics.add.staticGroup();
+            let deskTexture = this.textures.get('ground').getSourceImage();
+            let deskSections = [];
+            let sectionStart = 0;
+            LEVEL_CONFIG.deskGaps.forEach(gap => {
+                deskSections.push({
+                    startX: sectionStart,
+                    endX: gap.startX,
+                    surfaceY: sectionStart === 0 ? LEVEL_CONFIG.deskMat.upperSurfaceY : LEVEL_CONFIG.deskMat.lowerSurfaceY
+                });
+                sectionStart = gap.endX;
+            });
+            deskSections.push({
+                startX: sectionStart,
+                endX: LEVEL_CONFIG.levelWidth,
+                surfaceY: LEVEL_CONFIG.deskMat.lowerSurfaceY
+            });
+            deskSections.forEach(section => {
+                let width = section.endX - section.startX;
+                let centerX = (section.startX + section.endX) / 2;
+                this.add.image(centerX, section.surfaceY + LEVEL_CONFIG.deskMat.visualOffsetY, 'ground')
+                    .setDisplaySize(width, deskTexture.height);
+
+                let platform = this.add.rectangle(
+                    centerX,
+                    section.surfaceY + LEVEL_CONFIG.deskMat.platformThickness / 2,
+                    width,
+                    LEVEL_CONFIG.deskMat.platformThickness,
+                    0x000000,
+                    0
+                );
+                this.platforms.add(platform);
+            });
+
+            this.props = this.physics.add.group({ allowGravity: false, immovable: true });
+            
+            let p = LEVEL_CONFIG.pencil;
+            let pencil = this.props.create(p.x, p.y, 'pencil').setScale(p.scale);
+            let pencilBounds = getOpaqueBounds(this.textures.get('pencil').getSourceImage());
+            pencil.body.setSize(pencilBounds.width, pencil.height * p.hRatio);
+            pencil.body.setOffset(pencilBounds.left, pencilBounds.top);
+
+            let cc = LEVEL_CONFIG.coffeeCup;
+            let coffee = this.props.create(cc.x, cc.y, 'coffee').setScale(cc.scale);
+            coffee.body.setSize(coffee.width * cc.wRatio, coffee.height * cc.hRatio);
+            coffee.body.setOffset(coffee.width * cc.offX, coffee.height * cc.offY);
+
+            let lp = LEVEL_CONFIG.laptop;
+            let laptop = this.props.create(lp.x, lp.y, 'laptop').setScale(lp.scale);
+            laptop.body.setSize(laptop.width * lp.wRatio, laptop.height * lp.hRatio);
+            laptop.body.setOffset(laptop.width * lp.offX, laptop.height * lp.offY);
+
+            // Create Tiled Oat Bars
+            let oatBarBounds = getOpaqueBounds(this.textures.get('oat_bar').getSourceImage());
+            LEVEL_CONFIG.oatBars.forEach(ob => {
+                let oatBar = this.props.create(ob.x, ob.y, 'oat_bar').setScale(ob.scale);
+                oatBar.body.setSize(oatBarBounds.width, oatBar.height * ob.hRatio);
+                oatBar.body.setOffset(oatBarBounds.left, 311);
+            });
+
+            // --- NOTEBOOK STACK STAIRCASE ---
+            let ns = LEVEL_CONFIG.notebookStack;
+            
+            // Visual image
+            this.add.image(ns.x, ns.y, 'notebook_stack').setScale(ns.scale);
+
+            // Invisible static group for hitboxes
+            this.invisibleSteps = this.physics.add.staticGroup();
+            
+            // Exact restored step platforms
+            let notebookTexture = this.textures.get('notebook_stack').getSourceImage();
+            let notebookScale = ns.scale;
+            let notebookLeft = ns.x - notebookTexture.width * notebookScale / 2;
+            let step1X = ns.x - 140;
+            let step2X = ns.x - 30;
+            let step3X = ns.x + 100;
+            let step1Top = ns.y - notebookTexture.height * notebookScale / 2 +
+                getOpaqueTopAtWorldX(notebookTexture, step1X, notebookLeft, notebookScale) * notebookScale;
+            let step2Top = ns.y - notebookTexture.height * notebookScale / 2 +
+                getOpaqueTopAtWorldX(notebookTexture, step2X, notebookLeft, notebookScale) * notebookScale;
+            let step3Top = ns.y - notebookTexture.height * notebookScale / 2 +
+                getOpaqueTopAtWorldX(notebookTexture, step3X, notebookLeft, notebookScale) * notebookScale;
+            let step1 = this.add.rectangle(step1X, step1Top + 10, 100, 20, 0x000000, 0);
+            let step2 = this.add.rectangle(step2X, step2Top + 10, 120, 20, 0x000000, 0);
+            let step3 = this.add.rectangle(step3X, step3Top + 10, 175, 20, 0x000000, 0);
+
+            // Vertical wall at the right edge to block walking backward through the notebooks
+            let notebookWall = this.add.rectangle(ns.x + 225, ns.y + 25, 30, 170, 0x000000, 0);
+
+            this.invisibleSteps.add(step1);
+            this.invisibleSteps.add(step2);
+            this.invisibleSteps.add(step3);
+            this.invisibleSteps.add(notebookWall);
+
+            let eraserTexture = this.textures.get('eraser').getSourceImage();
+            let eraserBounds = getOpaqueBounds(eraserTexture);
+            LEVEL_CONFIG.eraserPlatforms.forEach(eraserConfig => {
+                let eraserWidth = eraserTexture.width * eraserConfig.scale;
+                let eraserHeight = eraserTexture.height * eraserConfig.scale;
+                let visibleTopOffset = eraserHeight / 2 - eraserBounds.top * eraserConfig.scale;
+                this.add.image(eraserConfig.x, eraserConfig.surfaceY + visibleTopOffset, 'eraser')
+                    .setScale(eraserConfig.scale);
+
+                let eraserSurface = this.add.rectangle(
+                    eraserConfig.x,
+                    eraserConfig.surfaceY + 8,
+                    eraserWidth * 0.76,
+                    16,
+                    0x000000,
+                    0
+                );
+                this.invisibleSteps.add(eraserSurface);
+            });
+
+            let finalRun = LEVEL_CONFIG.finalRun;
+            let staplerTexture = this.textures.get('stapler').getSourceImage();
+            let staplerBounds = getOpaqueBounds(staplerTexture);
+            let stapler = this.props.create(
+                finalRun.stapler.x,
+                finalRun.stapler.surfaceY - staplerTexture.height * finalRun.stapler.scale / 2,
+                'stapler'
+            ).setScale(finalRun.stapler.scale);
+            stapler.body.setSize(staplerBounds.width, staplerBounds.height * 0.3);
+            stapler.body.setOffset(staplerBounds.left, staplerBounds.top);
+
+            let smartphoneTexture = this.textures.get('smartphone').getSourceImage();
+            let smartphoneBounds = getOpaqueBounds(smartphoneTexture);
+            LEVEL_CONFIG.finalRun.smartphones.forEach(phone => {
+                let phoneWidth = smartphoneTexture.width * phone.scale;
+                let phoneHeight = smartphoneTexture.height * phone.scale;
+                let visibleTopOffset = phoneHeight * (0.5 - smartphoneBounds.top / smartphoneTexture.height);
+                this.add.image(phone.x, phone.surfaceY + visibleTopOffset, 'smartphone')
+                    .setScale(phone.scale);
+
+                let phoneSurface = this.add.rectangle(
+                    phone.x,
+                    phone.surfaceY + 7,
+                    phoneWidth * 0.8,
+                    14,
+                    0x000000,
+                    0
+                );
+                this.invisibleSteps.add(phoneSurface);
+            });
+
+            let printerTexture = this.textures.get('goal_printer').getSourceImage();
+            let printerBounds = getOpaqueBounds(printerTexture);
+            let printerHeight = printerTexture.height * finalRun.printer.scale;
+            let printerVisibleBottomOffset = (printerBounds.bottom + 1 - printerTexture.height / 2) * finalRun.printer.scale;
+            this.printerObj = this.add.image(
+                finalRun.printer.x,
+                finalRun.printer.surfaceY - printerVisibleBottomOffset,
+                'goal_printer'
+            ).setScale(finalRun.printer.scale).setDepth(5);
+
+            this.printerTrigger = this.physics.add.staticGroup();
+            let printerTrigger = this.add.rectangle(
+                finalRun.printer.x,
+                finalRun.printer.surfaceY - 5,
+                printerBounds.width * finalRun.printer.scale,
+                10,
+                0x000000,
+                0
+            );
+            this.printerTrigger.add(printerTrigger);
+
+            // Pencil Case Prop sitting atop step 3
+            let pc = LEVEL_CONFIG.pencilCase;
+            this.add.image(pc.x, pc.y, 'pencil_case').setScale(pc.scale);
+
+            // Create Van
+            let v = LEVEL_CONFIG.van;
+            this.vanObj = this.physics.add.sprite(v.x, v.y, 'van_empty').setScale(v.scale);
+            this.vanObj.body.setAllowGravity(false);
+            this.vanObj.body.setImmovable(true);
+            this.vanObj.setDepth(5); 
+
+            let rulerConfig = LEVEL_CONFIG.ruler;
+            let rulerTexture = this.textures.get('ruler').getSourceImage();
+            let rulerWidth = this.vanObj.displayWidth;
+            let rulerHeight = rulerWidth * rulerTexture.height / rulerTexture.width;
+            this.add.image(v.dropOffX, rulerConfig.y, 'ruler')
+                .setDisplaySize(rulerWidth, rulerHeight)
+                .setDepth(4);
+
+            this.rulerPlatform = this.physics.add.staticGroup();
+            let landingSurfaceY = this.vanObj.y + this.vanObj.displayHeight / 2;
+            let rulerSurface = this.add.rectangle(
+                v.dropOffX,
+                landingSurfaceY + rulerConfig.platformThickness / 2,
+                rulerWidth,
+                rulerConfig.platformThickness,
+                0x000000,
+                0
+            );
+            this.rulerPlatform.add(rulerSurface);
+
+            this.blobs = this.physics.add.staticGroup();
+            LEVEL_CONFIG.blobs.forEach(b => {
+                this.blobs.create(b.x, b.y, 'blob').setScale(0.12).refreshBody();
+            });
+            LEVEL_CONFIG.finalRun.collectibles.forEach(blob => {
+                this.blobs.create(blob.x, blob.y, 'blob').setScale(0.12).refreshBody();
+            });
+
+            this.anims.create({
+                key: 'toner_walk_anim',
+                frames: this.anims.generateFrameNumbers('toner_enemy', { start: 0, end: 3 }),
+                frameRate: 6,
+                repeat: -1
+            });
+
+            this.enemiesGroup = this.physics.add.group();
+            LEVEL_CONFIG.enemies.forEach(eData => {
+                let en = this.enemiesGroup.create(eData.x, eData.y, 'toner_enemy');
+                en.setScale(eData.scale);
+                en.setOrigin(0.5, 1);
+                en.body.setSize(eData.boxWidth, eData.boxHeight);
+                en.body.setAllowGravity(false);
+                en.anims.play('toner_walk_anim', true);
+                
+                en.minX = eData.minX;
+                en.maxX = eData.maxX;
+                en.patrolSpeed = eData.speed;
+                en.enemyDir = eData.dir;
+                if (en.enemyDir === -1) en.setFlipX(true);
+            });
+
+            // Checkpoint setup
+            let cpConf = LEVEL_CONFIG.checkpoint;
+            this.checkpointObj = this.physics.add.sprite(cpConf.x, cpConf.y, 'checkpoint_off').setScale(cpConf.scale);
+            this.checkpointObj.body.setSize(this.checkpointObj.width * cpConf.wRatio, this.checkpointObj.height * cpConf.hRatio);
+            this.checkpointObj.body.setOffset(this.checkpointObj.width * cpConf.offX, this.checkpointObj.height * cpConf.offY);
+            this.checkpointObj.body.setAllowGravity(false);
+            this.checkpointObj.body.setImmovable(true);
+
+            // Fan setup
+            let f = LEVEL_CONFIG.fan;
+            let fanImg = this.textures.get('fan_blades').getSourceImage();
+            if (!this.textures.exists('fan_sheet')) {
+                this.textures.addSpriteSheet('fan_sheet', fanImg, { 
+                    frameWidth: Math.floor(fanImg.width / 4), 
+                    frameHeight: fanImg.height 
+                });
+            }
+            
+            this.fanBlades = this.add.sprite(f.x, f.y, 'fan_sheet').setScale(f.scale);
+            this.anims.create({
+                key: 'fan_spin',
+                frames: this.anims.generateFrameNumbers('fan_sheet', { start: 0, end: 3 }),
+                frameRate: 24,
+                repeat: -1
+            });
+            this.fanBlades.anims.play('fan_spin', true);
+
+            // --- FAN SOLID HITBOXES ---
+            this.fanHitboxes = this.physics.add.staticGroup();
+            
+            // Adjusted to match the requested red line and green box!
+            let fanTopBox = this.add.rectangle(f.x - 45, f.y - 100, 90, 1, 0x000000, 0); // Top cage platform (red line)
+            let fanBaseBox = this.add.rectangle(f.x + 45, f.y + 30, 80, 125, 0x000000, 0); // Solid motor/base platform (green box)
+            
+            this.fanHitboxes.add(fanTopBox);
+            this.fanHitboxes.add(fanBaseBox);
+            
+            this.windZone = this.physics.add.sprite(f.x - 300, f.y - 20, 'wind');
+            this.windZone.body.setAllowGravity(false);
+            this.windZone.setDisplaySize(f.windWidth, 300); 
+            this.windZone.body.setSize(f.windWidth, 300);   
+            this.windZone.setAlpha(0.2);
+            this.windZone.setDepth(10);             
+            this.windZone.setFlipX(true);           
+            
+            this.tweens.add({
+                targets: this.windZone,
+                alpha: 0.2,
+                x: this.windZone.x - 20,
+                duration: 400,
+                yoyo: true,
+                repeat: -1
+            });
+
+            // Dynamic Rolling Pencil Hazards Group
+            this.rollingPencils = this.physics.add.group();
+            
+            this.projectiles = this.physics.add.group();
+            this.spaceKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+            this.player = this.physics.add.sprite(LEVEL_CONFIG.player.startX, LEVEL_CONFIG.player.startY, 'inkie');
+            this.player.setCollideWorldBounds(true);
+            this.player.setScale(LEVEL_CONFIG.player.scale); 
+            this.player.setOrigin(0.5, 1); 
+            this.player.body.setSize(LEVEL_CONFIG.player.boxWidth, LEVEL_CONFIG.player.boxHeight); 
+            this.player.isRidingVan = false; 
+            this.player.setDepth(6); 
+            
+            // --- COLLISIONS ---
+            this.physics.add.collider(this.player, this.platforms);
+            this.physics.add.collider(this.player, this.props); 
+            this.physics.add.collider(this.vanObj, this.rulerPlatform);
+            
+            this.physics.add.collider(this.player, this.invisibleSteps);
+            this.physics.add.collider(this.rollingPencils, this.invisibleSteps);
+            this.physics.add.collider(this.projectiles, this.invisibleSteps, hitObstacle, null, this);
+            
+            // Fan Collisions
+            this.physics.add.collider(this.player, this.fanHitboxes);
+            this.physics.add.collider(this.projectiles, this.fanHitboxes, hitObstacle, null, this);
+            
+            // Destroy rolling pencil when it hits the fan
+            this.physics.add.overlap(this.rollingPencils, this.fanHitboxes, (pencil, fanBox) => {
+                pencil.destroy();
+            }, null, this);
+            
+            this.physics.add.collider(this.rollingPencils, this.props);
+            this.physics.add.collider(this.rollingPencils, this.platforms);
+            this.physics.add.collider(this.projectiles, this.props, hitObstacle, null, this);
+            this.physics.add.collider(this.projectiles, this.platforms, hitObstacle, null, this);
+            
+            this.physics.add.collider(this.player, this.checkpointObj, activateCheckpoint, null, this);
+            this.physics.add.overlap(this.player, this.vanObj, triggerVanRide, null, this);
+            this.physics.add.overlap(this.player, this.printerTrigger, completeGame, null, this);
+            
+            this.physics.add.overlap(this.projectiles, this.enemiesGroup, (proj, eRef) => {
+                proj.destroy();
+                flattenEnemy.call(this, eRef);
+            }, null, this);
+            
+            this.physics.add.overlap(this.player, this.blobs, collectBlob, null, this);
+            this.physics.add.overlap(this.player, this.enemiesGroup, hitEnemy, null, this);
+            this.physics.add.overlap(this.player, this.rollingPencils, hitHazard, null, this);
+            
+            this.physics.add.overlap(this.player, this.windZone, (player, wind) => {
+                if (!player.isRidingVan) {
+                    player.x -= (LEVEL_CONFIG.fan.windPower * 0.016); 
+                }
+            }, null, this);
+
+            this.anims.create({
+                key: 'idle',
+                frames: this.anims.generateFrameNumbers('inkie', { start: 0, end: 1 }),
+                frameRate: 3,
+                repeat: -1
+            });
+
+            this.anims.create({
+                key: 'walk',
+                frames: this.anims.generateFrameNumbers('inkie_walk', { start: 0, end: 3 }),
+                frameRate: 8,
+                repeat: -1
+            });
+
+            this.player.anims.play('idle', true);
+            this.cursors = this.input.keyboard.createCursorKeys();
+
+            this.cameras.main.setBounds(0, 0, LEVEL_CONFIG.levelWidth, LEVEL_CONFIG.levelHeight);
+            this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
+
+            this.scoreText = this.add.text(16, 16, 'Ink Capacity: 0%', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '24px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                stroke: '#09243b',
+                strokeThickness: 4,
+                shadow: { offsetX: 0, offsetY: 2, color: '#07111b', blur: 5, fill: true }
+            });
+            this.scoreText.setScrollFactor(0);
+
+            this.gameStarted = false;
+            this.skipSpaceShot = false;
+            this.welcomeOverlay = null;
+            if (hasStartedBefore) {
+                startGameplay.call(this);
+            } else {
+                showWelcomeScreen.call(this);
+            }
+        }
+
+        function update() {
+            if (!this.gameStarted || this.levelComplete) return;
+
+            if (this.skipSpaceShot) {
+                this.skipSpaceShot = false;
+            } else if (Phaser.Input.Keyboard.JustDown(this.spaceKey) && inkScore >= 10 && !this.player.isRidingVan) {
+                shootInk.call(this);
+            }
+
+            let fellThroughDeskGap = LEVEL_CONFIG.deskGaps.some(deskGap =>
+                this.player.body.right > deskGap.startX &&
+                this.player.body.left < deskGap.endX &&
+                this.player.y > deskGap.resetY
+            );
+            if (!this.player.isRidingVan && fellThroughDeskGap) {
+                this.player.setPosition(currentCheckpoint.x, currentCheckpoint.y);
+                this.player.setVelocity(0, 0);
+            }
+
+            this.projectiles.getChildren().forEach(p => {
+                let camLeft = this.cameras.main.scrollX;
+                let camRight = camLeft + this.cameras.main.width;
+                if (p.x < camLeft || p.x > camRight) {
+                    p.destroy();
+                }
+            });
+
+            // Cleanup rolling pencils that fall offscreen or roll too far left
+            this.rollingPencils.getChildren().forEach(rp => {
+                if (rp.x < 2700 || rp.y > 650) {
+                    rp.destroy();
+                }
+            });
+
+            // Handle Van Ride Logic
+            if (this.player.isRidingVan) {
+                this.vanObj.setVelocityX(LEVEL_CONFIG.van.speed);
+                this.player.x = this.vanObj.x;
+                this.player.y = this.vanObj.y;
+                
+                if (this.vanObj.x >= LEVEL_CONFIG.van.dropOffX) {
+                    this.vanObj.x = LEVEL_CONFIG.van.dropOffX;
+                    this.vanObj.setVelocityX(0);
+                    this.vanObj.setImmovable(false);
+                    this.vanObj.body.setAllowGravity(true);
+                    this.player.isRidingVan = false;
+                    this.player.body.setAllowGravity(true);
+                    this.player.setVisible(true);
+                    this.vanObj.setTexture('van_empty');
+                    this.player.x += 80; 
+                    this.player.y -= 50; 
+                }
+            } else {
+                if (this.cursors.left.isDown) {
+                    this.player.setVelocityX(-LEVEL_CONFIG.player.speed); 
+                    this.player.setFlipX(true);
+                    if (this.player.body.touching.down && !isShooting) {
+                        this.player.anims.play('walk', true); 
+                    }
+                } 
+                else if (this.cursors.right.isDown) {
+                    this.player.setVelocityX(LEVEL_CONFIG.player.speed);  
+                    this.player.setFlipX(false);    
+                    if (this.player.body.touching.down && !isShooting) {
+                        this.player.anims.play('walk', true); 
+                    }
+                } 
+                else {
+                    this.player.setVelocityX(0);    
+                    if (this.player.body.touching.down && !isShooting) {
+                        this.player.anims.play('idle', true); 
+                    }
+                }
+
+                if (this.cursors.up.isDown && this.player.body.touching.down) {
+                    this.player.setVelocityY(LEVEL_CONFIG.player.jumpPower);
+                }
+
+                if (!this.player.body.touching.down && !isShooting) {
+                    this.player.anims.stop(); 
+                    if (this.player.body.velocity.y < 0) {
+                        this.player.setTexture('inkie_jump');
+                    } else {
+                        this.player.setTexture('inkie_fall');
+                    }
+                }
+            }
+
+            let offsetX = (this.player.width - LEVEL_CONFIG.player.boxWidth) / 2;
+            let offsetY = this.player.height - LEVEL_CONFIG.player.boxHeight;
+            this.player.body.setOffset(offsetX, offsetY);
+
+            this.enemiesGroup.getChildren().forEach(en => {
+                if (en.active) {
+                    en.x += en.patrolSpeed * 0.016 * en.enemyDir;
+                    if (en.x >= en.maxX) {
+                        en.enemyDir = -1;
+                        en.setFlipX(true);
+                    }
+                    if (en.x <= en.minX) {
+                        en.enemyDir = 1;
+                        en.setFlipX(false);
+                    }
+                }
+            });
+        }
+
+        function showWelcomeScreen() {
+            this.physics.world.pause();
+            this.player.setVelocity(0, 0);
+            this.scoreText.setVisible(false);
+            if (this.physics.world.debugGraphic) this.physics.world.debugGraphic.setVisible(false);
+
+            let shade = this.add.rectangle(400, 300, 800, 600, 0x07111b, 0.86)
+                .setScrollFactor(0)
+                .setDepth(1000)
+                .setAlpha(0);
+            let splodge = this.add.image(400, 300, 'goal_ink_splodges')
+                .setDisplaySize(660, 596)
+                .setScrollFactor(0)
+                .setDepth(1001)
+                .setAlpha(0);
+            let titleFirstLine = this.add.text(400, 58, 'WELCOME TO', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '36px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 7,
+                shadow: { offsetX: 0, offsetY: 4, color: '#07111b', blur: 8, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setAlpha(0);
+            let titleSecondLine = this.add.text(400, 106, "INKIE'S ADVENTURE!", {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '36px',
+                fontStyle: 'bold',
+                color: '#e2007a',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 7,
+                shadow: { offsetX: 0, offsetY: 4, color: '#07111b', blur: 8, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setAlpha(0);
+            let mission = this.add.text(400, 0,
+                "Inkie's Mission: Collect as much ink as possible\nand reach the Epson Inkjet Printer.", {
+                    fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                    fontSize: '20px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    align: 'center',
+                    stroke: '#09243b',
+                    strokeThickness: 4,
+                    shadow: { offsetX: 0, offsetY: 3, color: '#07111b', blur: 6, fill: true },
+                    wordWrap: { width: 620 }
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setAlpha(0);
+            let instructions = this.add.text(400, 0,
+                'HOW TO PLAY:\nLEFT ARROW + RIGHT ARROW  -  move left & right\nUP ARROW  -  jump\nSPACE BAR  -  fire ink jet to eliminate a toner (cost: 10% ink)', {
+                    fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                    fontSize: '18px',
+                    fontStyle: 'bold',
+                    color: '#ffffff',
+                    align: 'center',
+                    lineSpacing: 8,
+                    stroke: '#09243b',
+                    strokeThickness: 4,
+                    shadow: { offsetX: 0, offsetY: 3, color: '#07111b', blur: 6, fill: true },
+                    wordWrap: { width: 620 }
+                }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setAlpha(0);
+            let startPrompt = this.add.text(400, 0, 'PRESS SPACE TO START', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '26px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 6,
+                shadow: { offsetX: 0, offsetY: 3, color: '#07111b', blur: 7, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1003).setAlpha(0);
+
+            let welcomeBlankLine = 27;
+            mission.y = titleSecondLine.y + titleSecondLine.height / 2 + welcomeBlankLine * 2 + mission.height / 2;
+            instructions.y = mission.y + mission.height / 2 + welcomeBlankLine * 2 + instructions.height / 2;
+            startPrompt.y = instructions.y + instructions.height / 2 + welcomeBlankLine * 2 + startPrompt.height / 2;
+
+            let welcomeText = [titleFirstLine, titleSecondLine, mission, instructions, startPrompt];
+            let textTop = titleFirstLine.getBounds().top;
+            let textBottom = startPrompt.getBounds().bottom;
+            let verticalCenteringOffset = this.scale.height / 2 - (textTop + textBottom) / 2;
+            welcomeText.forEach(text => text.y += verticalCenteringOffset);
+
+            this.welcomeOverlay = [shade, splodge, titleFirstLine, titleSecondLine, mission, instructions, startPrompt];
+            this.tweens.add({ targets: shade, alpha: 0.86, duration: 450, ease: 'Quad.Out' });
+            this.tweens.add({ targets: splodge, alpha: 1, duration: 600, delay: 100, ease: 'Back.Out' });
+            this.tweens.add({ targets: [titleFirstLine, titleSecondLine, mission, instructions, startPrompt], alpha: 1, duration: 500, delay: 250 });
+            this.input.keyboard.once('keydown-SPACE', () => startGameplay.call(this));
+        }
+
+        function startGameplay() {
+            if (this.gameStarted) return;
+            this.welcomeOverlay?.forEach(item => item.destroy());
+            this.welcomeOverlay = null;
+            this.gameStarted = true;
+            this.skipSpaceShot = true;
+            hasStartedBefore = true;
+            this.physics.world.resume();
+            this.scoreText.setVisible(true);
+            if (this.physics.world.debugGraphic) this.physics.world.debugGraphic.setVisible(true);
+            this.time.addEvent({
+                delay: 2500,
+                callback: spawnRollingPencil,
+                callbackScope: this,
+                loop: true
+            });
+        }
+
+        function completeGame() {
+            if (this.levelComplete) return;
+            this.levelComplete = true;
+            this.physics.world.pause();
+            this.time.removeAllEvents();
+            this.input.keyboard.once('keydown-SPACE', () => restartLevel.call(this));
+            this.player.setVelocity(0, 0);
+            this.player.anims.stop();
+            this.scoreText.setVisible(false);
+            if (this.physics.world.debugGraphic) this.physics.world.debugGraphic.setVisible(false);
+            this.enemiesGroup.getChildren().forEach(enemy => enemy.anims.pause());
+            this.cameras.main.stopFollow();
+
+            let shade = this.add.rectangle(400, 300, 800, 600, 0x07111b, 0.84)
+                .setScrollFactor(0)
+                .setDepth(1000)
+                .setAlpha(0);
+            let splodge = this.add.image(400, 300, 'goal_ink_splodges')
+                .setDisplaySize(660, 596)
+                .setScrollFactor(0)
+                .setDepth(1001)
+                .setAlpha(0);
+            let finalScaleX = splodge.scaleX;
+            let finalScaleY = splodge.scaleY;
+            splodge.setScale(finalScaleX * 0.72, finalScaleY * 0.72);
+
+            let title = this.add.text(400, 235, 'Mission Complete', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '52px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 8,
+                shadow: { offsetX: 0, offsetY: 4, color: '#07111b', blur: 8, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1002).setAlpha(0);
+            let capacity = this.add.text(400, 345, 'Ink Capacity: ' + Math.round(inkScore) + '%', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '32px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 6,
+                shadow: { offsetX: 0, offsetY: 3, color: '#07111b', blur: 7, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1003).setAlpha(0);
+            let restartPrompt = this.add.text(400, 510, 'Press SPACE to restart', {
+                fontFamily: 'Avenir Next, Montserrat, sans-serif',
+                fontSize: '24px',
+                fontStyle: 'bold',
+                color: '#ffffff',
+                align: 'center',
+                stroke: '#09243b',
+                strokeThickness: 6,
+                shadow: { offsetX: 0, offsetY: 3, color: '#07111b', blur: 7, fill: true }
+            }).setOrigin(0.5).setScrollFactor(0).setDepth(1004).setAlpha(0);
+
+            this.tweens.add({ targets: shade, alpha: 0.84, duration: 450, ease: 'Quad.Out' });
+            this.tweens.add({
+                targets: splodge,
+                alpha: 1,
+                scaleX: finalScaleX,
+                scaleY: finalScaleY,
+                duration: 650,
+                ease: 'Back.Out'
+            });
+            this.tweens.add({ targets: title, alpha: 1, y: 265, duration: 550, delay: 220, ease: 'Cubic.Out' });
+            this.tweens.add({ targets: capacity, alpha: 1, y: 345, duration: 550, delay: 420, ease: 'Cubic.Out' });
+            this.tweens.add({ targets: restartPrompt, alpha: 1, duration: 550, delay: 700 });
+        }
+
+        function restartLevel() {
+            inkScore = 0;
+            isShooting = false;
+            currentCheckpoint.x = LEVEL_CONFIG.player.startX;
+            currentCheckpoint.y = LEVEL_CONFIG.player.startY;
+            hasReachedCheckpoint = false;
+            this.levelComplete = false;
+            this.scene.restart();
+        }
+
+        function spawnRollingPencil() {
+            let pc = LEVEL_CONFIG.pencilCase;
+            let pencil = this.rollingPencils.create(pc.x - 30, pc.y, 'rolling_pencil');
+            pencil.setScale(0.02); 
+            pencil.setBounce(0.2);
+            pencil.setFriction(0.1);
+            pencil.setVelocityX(-150); 
+            pencil.setAngularVelocity(-300); 
+        }
+
+        function triggerVanRide(player, van) {
+            if (!player.isRidingVan && van.x < LEVEL_CONFIG.van.dropOffX) {
+                player.isRidingVan = true;
+                player.body.setAllowGravity(false);
+                player.setVelocity(0, 0);
+                
+                player.setVisible(false);
+                van.setTexture('van_driving');
+            }
+        }
+
+        function shootInk() {
+            inkScore -= 10;
+            this.scoreText.setText('Ink Capacity: ' + inkScore + '%');
+            
+            isShooting = true;
+            this.player.anims.stop();
+            this.player.setTexture('inkie_shoot'); 
+            this.player.setCrop(0, 0, this.player.width / 2, this.player.height);
+            
+            this.time.delayedCall(220, () => {
+                isShooting = false;
+                this.player.isCropped = false; 
+            });
+
+            let facingLeft = this.player.flipX;
+            let spawnX = facingLeft ? this.player.x - 30 : this.player.x + 30;
+            
+            let p = this.projectiles.create(spawnX, this.player.y - 45, 'projectile');
+            p.setScale(0.15);
+            p.body.setAllowGravity(false);
+            p.setVelocityX(facingLeft ? -650 : 650);
+        }
+
+        function hitObstacle(projectile, obstacle) {
+            let splat = this.add.image(projectile.x, projectile.y, 'splat').setScale(0.15);
+            this.tweens.add({
+                targets: splat,
+                alpha: 0,
+                duration: 300,
+                onComplete: () => splat.destroy()
+            });
+            projectile.destroy();
+        }
+
+        function flattenEnemy(enemyRef) {
+            if (!enemyRef.active) return;
+            
+            enemyRef.active = false;
+            enemyRef.setVelocityX(0);
+            enemyRef.anims.stop();
+            enemyRef.setTexture('toner_dead');
+            enemyRef.setScale(0.22, 0.08); 
+            enemyRef.y += 30; 
+            
+            this.tweens.add({
+                targets: enemyRef,
+                alpha: 0,
+                duration: 1500,
+                onComplete: () => enemyRef.disableBody(true, true)
+            });
+        }
+
+        function collectBlob(player, blob) {
+            blob.disableBody(true, true);
+            inkScore = Math.min(inkScore + 2, 100);
+            this.scoreText.setText('Ink Capacity: ' + inkScore + '%');
+        }
+
+        function activateCheckpoint(player, cp) {
+            if (player.body.touching.down && cp.body.touching.up) {
+                if (!hasReachedCheckpoint) {
+                    hasReachedCheckpoint = true;
+                    cp.setTexture('checkpoint_on'); 
+                    currentCheckpoint.x = cp.x;
+                    currentCheckpoint.y = cp.body.y; 
+                    
+                    let cpText = this.add.text(cp.x - 50, cp.y - 100, 'CHECKPOINT!', { fontSize: '20px', fill: '#00ff00', fontStyle: 'bold' });
+                    this.tweens.add({ targets: cpText, y: cp.y - 150, alpha: 0, duration: 1500, onComplete: () => cpText.destroy() });
+                }
+            }
+        }
+
+        function hitHazard(player, hazard, inkPenalty = 20) {
+            if (player.isRidingVan) return;
+
+            inkScore = Math.max(0, inkScore - inkPenalty);
+            this.scoreText.setText('Ink Capacity: ' + inkScore + '%');
+            
+            player.x = currentCheckpoint.x;
+            player.y = currentCheckpoint.y;
+            player.setVelocity(0, 0);
+        }
+
+        function hitEnemy(player, enemyRef) {
+            if (!enemyRef.active) return;
+            if (player.isRidingVan) return;
+
+            if (player.body.velocity.y > 0 && player.y < enemyRef.y - 20) {
+                player.setVelocityY(-350);
+                flattenEnemy.call(this, enemyRef);
+            } else {
+                hitHazard.call(this, player, enemyRef, 10);
+            }
+        }
+    </script>
+</body>
+</html>
